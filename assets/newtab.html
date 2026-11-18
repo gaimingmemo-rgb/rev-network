@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rev-Launcher // Imperial Command Bridge</title>
+    <style>
+        :root {
+            --bg-base: #090a0d;
+            --bg-panel: #11131a;
+            --bg-card: #151821;
+            --accent-red: #ff1e38;
+            --accent-red-glow: rgba(255, 30, 56, 0.5);
+            --border-red: #8a0e1c;
+            --border-dim: #232734;
+            --text-main: #f0f4f8;
+            --text-dim: #7f8a9e;
+            --tactical-cyan: #00f0ff;
+            --gold-accent: #ffb703;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 50% 15%, rgba(255, 30, 56, 0.12) 0%, transparent 65%),
+                linear-gradient(rgba(9, 10, 13, 0.96), rgba(9, 10, 13, 0.96)),
+                repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255, 30, 56, 0.02) 2px, rgba(255, 30, 56, 0.02) 4px);
+        }
+
+        /* Scanline Overlay */
+        .scanlines {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            pointer-events: none;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.2) 50%);
+            background-size: 100% 4px;
+            z-index: 10;
+            opacity: 0.5;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 980px;
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 20;
+        }
+
+        /* Top Google Authentication Card */
+        .google-account-banner {
+            width: 100%;
+            max-width: 780px;
+            background: linear-gradient(90deg, #12151e 0%, #1a1620 100%);
+            border: 1px solid var(--border-red);
+            border-radius: 6px;
+            padding: 10px 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6), inset 0 0 10px rgba(255, 30, 56, 0.08);
+            clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+        }
+
+        .google-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .google-g-icon {
+            width: 26px;
+            height: 26px;
+            background: #ffffff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 900;
+            color: #4285f4;
+            box-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+        }
+
+        .google-text-title {
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #ffffff;
+        }
+
+        .google-text-sub {
+            font-size: 10px;
+            color: var(--text-dim);
+            letter-spacing: 1px;
+        }
+
+        .google-action-btn {
+            background: #ff1e38;
+            color: #ffffff;
+            border: none;
+            padding: 7px 16px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .google-action-btn:hover {
+            background: #ff3b52;
+            box-shadow: 0 0 15px var(--accent-red-glow);
+            transform: translateY(-1px);
+        }
+
+        /* Rev-Launcher Header */
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        .crest-svg {
+            width: 80px;
+            height: 80px;
+            filter: drop-shadow(0 0 18px var(--accent-red-glow));
+            transition: transform 0.4s ease, filter 0.4s ease;
+            cursor: pointer;
+        }
+
+        .crest-svg:hover {
+            transform: rotate(30deg) scale(1.08);
+            filter: drop-shadow(0 0 25px rgba(255, 30, 56, 0.9));
+        }
+
+        .title {
+            font-size: 26px;
+            font-weight: 900;
+            letter-spacing: 6px;
+            text-transform: uppercase;
+            color: #ffffff;
+            margin-top: 12px;
+            text-shadow: 0 0 12px var(--accent-red-glow);
+        }
+
+        .subtitle {
+            font-size: 11px;
+            letter-spacing: 3px;
+            color: var(--accent-red);
+            text-transform: uppercase;
+            margin-top: 4px;
+            font-weight: 800;
+        }
+
+        /* HUD Diagnostics */
+        .hud-grid {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            width: 100%;
+            max-width: 780px;
+        }
+
+        .hud-card {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-red);
+            padding: 10px 16px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+            clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+
+        .hud-icon {
+            font-size: 18px;
+            color: var(--accent-red);
+        }
+
+        .hud-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .hud-label {
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-dim);
+            font-weight: 700;
+        }
+
+        .hud-value {
+            font-size: 12px;
+            font-weight: 800;
+            color: #ffffff;
+            letter-spacing: 1px;
+        }
+
+        .status-dot {
+            width: 7px;
+            height: 7px;
+            background: var(--accent-red);
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 6px;
+            box-shadow: 0 0 8px var(--accent-red);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.3; }
+            50% { opacity: 1; }
+            100% { opacity: 0.3; }
+        }
+
+        /* Search Interface */
+        .search-container {
+            width: 100%;
+            max-width: 780px;
+            position: relative;
+            margin-bottom: 35px;
+        }
+
+        .search-box {
+            display: flex;
+            align-items: center;
+            background: var(--bg-panel);
+            border: 1px solid var(--border-red);
+            border-radius: 6px;
+            padding: 6px 12px;
+            box-shadow: 0 0 25px rgba(0, 0, 0, 0.7), inset 0 0 10px rgba(255, 30, 56, 0.08);
+            transition: all 0.3s ease;
+        }
+
+        .search-box:focus-within {
+            border-color: var(--accent-red);
+            box-shadow: 0 0 25px var(--accent-red-glow), inset 0 0 15px rgba(255, 30, 56, 0.18);
+        }
+
+        /* Search Engine Selector */
+        .engine-selector {
+            position: relative;
+            margin-right: 12px;
+        }
+
+        .engine-btn {
+            background: rgba(255, 30, 56, 0.15);
+            color: var(--accent-red);
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            padding: 7px 12px;
+            border-radius: 4px;
+            border: 1px solid var(--border-red);
+            cursor: pointer;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .engine-btn:hover {
+            background: var(--accent-red);
+            color: #ffffff;
+        }
+
+        .engine-dropdown {
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            background: #11141c;
+            border: 1px solid var(--border-red);
+            border-radius: 4px;
+            width: 160px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.8);
+            display: none;
+            flex-direction: column;
+            z-index: 100;
+            overflow: hidden;
+        }
+
+        .engine-dropdown.show {
+            display: flex;
+        }
+
+        .engine-option {
+            padding: 9px 14px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #e0e6ed;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: background 0.15s ease;
+        }
+
+        .engine-option:hover {
+            background: #1c212e;
+            color: var(--accent-red);
+        }
+
+        .engine-option.active {
+            background: rgba(255, 30, 56, 0.2);
+            color: #ffffff;
+            border-left: 3px solid var(--accent-red);
+        }
+
+        .search-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #ffffff;
+            font-size: 15px;
+            letter-spacing: 0.5px;
+            padding: 8px 6px;
+        }
+
+        .search-input::placeholder {
+            color: #576073;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            font-size: 12px;
+        }
+
+        .search-btn {
+            background: var(--accent-red);
+            border: none;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 4px;
+            font-weight: 900;
+            font-size: 12px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .search-btn:hover {
+            background: #ff3b52;
+            box-shadow: 0 0 15px var(--accent-red-glow);
+            transform: translateY(-1px);
+        }
+
+        /* Holo-Deck Launch Grid */
+        .grid-header {
+            width: 100%;
+            max-width: 780px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+            border-bottom: 1px solid rgba(255, 30, 56, 0.2);
+            padding-bottom: 6px;
+        }
+
+        .grid-title {
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--text-dim);
+        }
+
+        .deck-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+            width: 100%;
+            max-width: 780px;
+        }
+
+        .deck-card {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-dim);
+            border-radius: 6px;
+            padding: 15px 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none;
+            color: var(--text-main);
+            transition: all 0.25s cubic-bezier(0.165, 0.84, 0.44, 1);
+            position: relative;
+            overflow: hidden;
+            clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+        }
+
+        .deck-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 3px; height: 100%;
+            background: transparent;
+            transition: background 0.25s ease;
+        }
+
+        .deck-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--accent-red);
+            background: #171b26;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6), 0 0 15px var(--accent-red-glow);
+        }
+
+        .deck-card:hover::before {
+            background: var(--accent-red);
+        }
+
+        .deck-icon {
+            font-size: 24px;
+            margin-bottom: 6px;
+            transition: transform 0.2s ease;
+        }
+
+        .deck-card:hover .deck-icon {
+            transform: scale(1.15);
+        }
+
+        .deck-name {
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .deck-desc {
+            font-size: 9px;
+            color: var(--text-dim);
+            margin-top: 3px;
+            letter-spacing: 0.5px;
+        }
+
+        /* ══════════════════════════════════════════════════════════
+           ANIMATED TACTICAL QUICK MATRIX (WEBSITE, RELEASES, DISCORD)
+           ══════════════════════════════════════════════════════════ */
+        .tactical-matrix-strip {
+            width: 100%;
+            max-width: 780px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        @media (max-width: 768px) {
+            .tactical-matrix-strip {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .anim-tactical-btn {
+            position: relative;
+            background: linear-gradient(135deg, #11141d 0%, #171b26 50%, #0d0f17 100%);
+            border: 1px solid rgba(255, 30, 56, 0.4);
+            border-radius: 8px;
+            padding: 14px 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            color: #ffffff;
+            cursor: pointer;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.5), inset 0 0 12px rgba(255, 255, 255, 0.02);
+            clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+        }
+
+        /* Animated Glowing Edge Sweep */
+        .anim-tactical-btn::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, transparent 70%);
+            opacity: 0;
+            transform: rotate(30deg);
+            transition: opacity 0.4s ease, transform 0.6s ease;
+            pointer-events: none;
+        }
+
+        .anim-tactical-btn:hover::before {
+            opacity: 1;
+            transform: rotate(0deg) scale(1.1);
+        }
+
+        /* Shimmering Top Accent Line */
+        .anim-tactical-btn::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #ffffff, transparent);
+            transition: all 0.5s ease;
+        }
+
+        .anim-tactical-btn:hover::after {
+            left: 100%;
+            transition: all 0.75s ease;
+        }
+
+        .anim-tactical-btn:hover {
+            transform: translateY(-4px) scale(1.02);
+        }
+
+        /* Theme Variants */
+        /* 1. Website (Cyan Matrix) */
+        .btn-theme-website {
+            border-color: rgba(0, 240, 255, 0.5);
+            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.5), 0 0 10px rgba(0, 240, 255, 0.15);
+        }
+        .btn-theme-website:hover {
+            border-color: #00f0ff;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.7), 0 0 25px rgba(0, 240, 255, 0.5);
+        }
+        .btn-theme-website .matrix-icon-glow {
+            color: #00f0ff;
+            text-shadow: 0 0 14px rgba(0, 240, 255, 0.8);
+            animation: pulseCyan 2.4s infinite ease-in-out;
+        }
+        .btn-theme-website .matrix-badge {
+            background: rgba(0, 240, 255, 0.15);
+            color: #00f0ff;
+            border: 1px solid rgba(0, 240, 255, 0.4);
+        }
+
+        /* 2. Releases (Golden Amber / Crimson Pulse) */
+        .btn-theme-releases {
+            border-color: rgba(255, 183, 3, 0.5);
+            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.5), 0 0 10px rgba(255, 183, 3, 0.15);
+        }
+        .btn-theme-releases:hover {
+            border-color: #ffb703;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.7), 0 0 25px rgba(255, 183, 3, 0.55);
+        }
+        .btn-theme-releases .matrix-icon-glow {
+            color: #ffb703;
+            text-shadow: 0 0 14px rgba(255, 183, 3, 0.9);
+            animation: pulseGold 2s infinite ease-in-out;
+        }
+        .btn-theme-releases .matrix-badge {
+            background: rgba(255, 183, 3, 0.2);
+            color: #ffb703;
+            border: 1px solid rgba(255, 183, 3, 0.5);
+        }
+
+        /* 3. Discord (Blurple Comms) */
+        .btn-theme-discord {
+            border-color: rgba(88, 101, 242, 0.5);
+            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.5), 0 0 10px rgba(88, 101, 242, 0.15);
+        }
+        .btn-theme-discord:hover {
+            border-color: #5865F2;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.7), 0 0 25px rgba(88, 101, 242, 0.55);
+        }
+        .btn-theme-discord .matrix-icon-glow {
+            color: #7983f5;
+            text-shadow: 0 0 14px rgba(88, 101, 242, 0.9);
+            animation: pulseBlurple 2.2s infinite ease-in-out;
+        }
+        .btn-theme-discord .matrix-badge {
+            background: rgba(88, 101, 242, 0.2);
+            color: #a4afff;
+            border: 1px solid rgba(88, 101, 242, 0.5);
+        }
+
+        /* 4. GitHub Repo (Crimson Command) */
+        .btn-theme-github {
+            border-color: rgba(255, 30, 56, 0.5);
+            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.5), 0 0 10px rgba(255, 30, 56, 0.15);
+        }
+        .btn-theme-github:hover {
+            border-color: #ff1e38;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.7), 0 0 25px rgba(255, 30, 56, 0.6);
+        }
+        .btn-theme-github .matrix-icon-glow {
+            color: #ff1e38;
+            text-shadow: 0 0 14px rgba(255, 30, 56, 0.9);
+            animation: pulseRed 2s infinite ease-in-out;
+        }
+        .btn-theme-github .matrix-badge {
+            background: rgba(255, 30, 56, 0.2);
+            color: #ff4d61;
+            border: 1px solid rgba(255, 30, 56, 0.5);
+        }
+
+        /* Internal Button Elements */
+        .matrix-icon-glow {
+            font-size: 24px;
+            margin-bottom: 6px;
+            display: inline-block;
+            transition: transform 0.3s ease;
+        }
+        .anim-tactical-btn:hover .matrix-icon-glow {
+            transform: scale(1.22) rotate(-5deg);
+        }
+
+        .matrix-title {
+            font-size: 11px;
+            font-weight: 900;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: #ffffff;
+            margin-bottom: 3px;
+        }
+
+        .matrix-sub {
+            font-size: 9px;
+            color: var(--text-dim);
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .matrix-badge {
+            font-size: 8px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            padding: 3px 8px;
+            border-radius: 3px;
+            text-transform: uppercase;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .live-dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: currentColor;
+            display: inline-block;
+            animation: dotFlicker 1.5s infinite;
+        }
+
+        /* Keyframe Animations */
+        @keyframes pulseCyan {
+            0%, 100% { filter: drop-shadow(0 0 4px rgba(0, 240, 255, 0.6)); }
+            50% { filter: drop-shadow(0 0 12px rgba(0, 240, 255, 1)); }
+        }
+        @keyframes pulseGold {
+            0%, 100% { filter: drop-shadow(0 0 4px rgba(255, 183, 3, 0.6)); }
+            50% { filter: drop-shadow(0 0 14px rgba(255, 183, 3, 1)); }
+        }
+        @keyframes pulseBlurple {
+            0%, 100% { filter: drop-shadow(0 0 4px rgba(88, 101, 242, 0.6)); }
+            50% { filter: drop-shadow(0 0 12px rgba(88, 101, 242, 1)); }
+        }
+        @keyframes pulseRed {
+            0%, 100% { filter: drop-shadow(0 0 4px rgba(255, 30, 56, 0.6)); }
+            50% { filter: drop-shadow(0 0 14px rgba(255, 30, 56, 1)); }
+        }
+        @keyframes dotFlicker {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.3; transform: scale(0.8); }
+        }
+
+        .footer {
+            margin-top: 35px;
+            font-size: 10px;
+            color: #4b5466;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="scanlines"></div>
+
+    <div class="container">
+        <!-- Top Google Register / Sign In Bar -->
+        <div class="google-account-banner">
+            <div class="google-info">
+                <div class="google-g-icon">G</div>
+                <div>
+                    <div class="google-text-title">Google Authentication Core</div>
+                    <div class="google-text-sub">Register account or sign in to YouTube, Gmail, & Drive</div>
+                </div>
+            </div>
+            <a href="imperial://google-auth" class="google-action-btn" onclick="playBeep()">
+                <span>SIGN IN / REGISTER</span> &#10148;
+            </a>
+        </div>
+
+        <!-- Rev-Launcher Header -->
+        <div class="header">
+            <svg class="crest-svg" viewBox="0 0 100 100" onclick="playBeep()">
+                <circle cx="50" cy="50" r="46" fill="none" stroke="#ff1e38" stroke-width="4"/>
+                <circle cx="50" cy="50" r="38" fill="#12151d" stroke="#8a0e1c" stroke-width="2"/>
+                <path d="M 50 14 L 50 32 M 50 68 L 50 86 M 14 50 L 32 50 M 68 50 L 86 50 M 24 24 L 37 37 M 63 63 L 76 76 M 24 76 L 37 63 M 63 37 L 76 24" 
+                      stroke="#ff1e38" stroke-width="6" stroke-linecap="square"/>
+                <circle cx="50" cy="50" r="14" fill="#0b0d12" stroke="#ff1e38" stroke-width="3"/>
+                <circle cx="50" cy="50" r="5" fill="#ff1e38"/>
+            </svg>
+            <h1 class="title">REV LAUNCHER</h1>
+            <p class="subtitle">Imperial Command Core // Rev Network Web Gateway</p>
+        </div>
+
+        <!-- ANIMATED TACTICAL COMMAND STRIP: WEBSITE, RELEASES, DISCORD, GITHUB -->
+        <div class="tactical-matrix-strip">
+            <!-- 1. OFFICIAL WEBSITE -->
+            <a href="https://gaimingmemo-rgb.github.io/rev-network/" class="anim-tactical-btn btn-theme-website" onclick="playBeep()">
+                <div class="matrix-icon-glow">🌐</div>
+                <div class="matrix-title">OFFICIAL SITE</div>
+                <div class="matrix-sub">Web Gateway</div>
+                <span class="matrix-badge"><span class="live-dot"></span>PORTAL ACTIVE</span>
+            </a>
+
+            <!-- 2. GITHUB RELEASES -->
+            <a href="https://github.com/gaimingmemo-rgb/rev-network/releases" class="anim-tactical-btn btn-theme-releases" onclick="playBeep()">
+                <div class="matrix-icon-glow">🚀</div>
+                <div class="matrix-title">RELEASES</div>
+                <div class="matrix-sub">Download Builds</div>
+                <span class="matrix-badge"><span class="live-dot"></span>v2.0 LATEST</span>
+            </a>
+
+            <!-- 3. OFFICIAL DISCORD -->
+            <a href="https://discord.gg/8rnKQKbaHj" target="_blank" rel="noopener noreferrer" class="anim-tactical-btn btn-theme-discord" onclick="playBeep()">
+                <div class="matrix-icon-glow">💬</div>
+                <div class="matrix-title">DISCORD COMMS</div>
+                <div class="matrix-sub">Pilot Network</div>
+                <span class="matrix-badge"><span class="live-dot"></span>LIVE FLEET</span>
+            </a>
+
+            <!-- 4. GITHUB REPO -->
+            <a href="https://github.com/gaimingmemo-rgb/rev-network" target="_blank" rel="noopener noreferrer" class="anim-tactical-btn btn-theme-github" onclick="playBeep()">
+                <div class="matrix-icon-glow">⎊</div>
+                <div class="matrix-title">GITHUB REPO</div>
+                <div class="matrix-sub">Source Intel</div>
+                <span class="matrix-badge"><span class="live-dot"></span>OPEN CODE</span>
+            </a>
+        </div>
+
+        <!-- Rev Community Hardware Node Entry Card -->
+        <a href="imperial://community" class="google-account-banner" style="border-color: #ff1e38; text-decoration: none; margin-bottom: 25px;" onclick="playBeep()">
+            <div class="google-info">
+                <div class="google-g-icon" style="background: #ff1e38; color: #ffffff; font-size: 14px;">&#9889;</div>
+                <div>
+                    <div class="google-text-title" style="color: #ff1e38;">REV COMMUNITY // HARDWARE NODE BAY</div>
+                    <div class="google-text-sub">Download Rev-Launcher &bull; Real Peer Node &bull; Live Network Comms &bull; Zero Bots</div>
+                </div>
+            </div>
+            <div class="google-action-btn" style="background: #191e2b; border: 1px solid #ff1e38; color: #ff3b52;">
+                <span>ENTER COMMUNITY</span> &#10148;
+            </div>
+        </a>
+
+        <!-- HUD Diagnostics -->
+        <div class="hud-grid">
+            <div class="hud-card">
+                <span class="hud-icon">&#9876;</span>
+                <div class="hud-info">
+                    <span class="hud-label">Defensive Shield</span>
+                    <span class="hud-value"><span class="status-dot"></span>ACTIVE</span>
+                </div>
+            </div>
+            <div class="hud-card">
+                <span class="hud-icon">&#128737;</span>
+                <div class="hud-info">
+                    <span class="hud-label">Threat Interceptor</span>
+                    <span class="hud-value"><span class="status-dot"></span>DEFENDER READY</span>
+                </div>
+            </div>
+            <div class="hud-card">
+                <span class="hud-icon">&#9889;</span>
+                <div class="hud-info">
+                    <span class="hud-label">RAM Optimizer</span>
+                    <span class="hud-value"><span class="status-dot"></span>ULTRA-LOW</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search Bar with Engine Switcher -->
+        <div class="search-container">
+            <div class="search-box">
+                <div class="engine-selector">
+                    <button type="button" class="engine-btn" id="engineBtn" onclick="toggleEngineDropdown()">
+                        <span id="currentEngineName">Google</span> &#9662;
+                    </button>
+                    <div class="engine-dropdown" id="engineDropdown">
+                        <div class="engine-option" onclick="selectEngine('Google')">Google</div>
+                        <div class="engine-option" onclick="selectEngine('DuckDuckGo')">DuckDuckGo</div>
+                        <div class="engine-option" onclick="selectEngine('Brave')">Brave</div>
+                        <div class="engine-option" onclick="selectEngine('Bing')">Bing</div>
+                        <div class="engine-option" onclick="selectEngine('Startpage')">Startpage</div>
+                    </div>
+                </div>
+
+                <input type="text" id="queryInput" class="search-input" placeholder="Enter target URL or query (e.g. 'hi')..." autocomplete="off" autofocus>
+                <button type="button" class="search-btn" onclick="executeSearch()">ENGAGE</button>
+            </div>
+        </div>
+
+        <!-- Quick Launch Deck -->
+        <div class="grid-header">
+            <span class="grid-title">Tactical Quick Launch</span>
+            <span class="grid-title">Holo-Deck Ready</span>
+        </div>
+
+        <div class="deck-grid">
+            <a href="https://www.youtube.com" class="deck-card" onclick="playBeep()">
+                <div class="deck-icon">&#9658;</div>
+                <div class="deck-name">YouTube</div>
+                <div class="deck-desc">Ad-Free Stream</div>
+            </a>
+            <a href="https://www.google.com" class="deck-card" onclick="playBeep()">
+                <div class="deck-icon">&#128269;</div>
+                <div class="deck-name">Google</div>
+                <div class="deck-desc">Command Search</div>
+            </a>
+            <a href="https://github.com" class="deck-card" onclick="playBeep()">
+                <div class="deck-icon">&#128187;</div>
+                <div class="deck-name">GitHub</div>
+                <div class="deck-desc">Command Repos</div>
+            </a>
+            <a href="https://www.reddit.com" class="deck-card" onclick="playBeep()">
+                <div class="deck-icon">&#128172;</div>
+                <div class="deck-name">Reddit</div>
+                <div class="deck-desc">Data Comm-Link</div>
+            </a>
+            <a href="https://discord.com/app" class="deck-card" onclick="playBeep()">
+                <div class="deck-icon">&#127918;</div>
+                <div class="deck-name">Discord</div>
+                <div class="deck-desc">Secure Comms</div>
+            </a>
+            <a href="https://twitch.tv" class="deck-card" onclick="playBeep()">
+                <div class="deck-icon">&#128250;</div>
+                <div class="deck-name">Twitch</div>
+                <div class="deck-desc">Live Telemetry</div>
+            </a>
+            <a href="https://virustotal.com" class="deck-card" onclick="playBeep()">
+                <div class="deck-icon">&#128737;</div>
+                <div class="deck-name">VirusTotal</div>
+                <div class="deck-desc">Threat Intel</div>
+            </a>
+            <a href="https://www.wikipedia.org" class="deck-card" onclick="playBeep()">
+                <div class="deck-icon">&#128218;</div>
+                <div class="deck-name">Wikipedia</div>
+                <div class="deck-desc">Archive Database</div>
+            </a>
+        </div>
+
+        <div class="footer">
+            Rev Network &bull; Rev-Launcher Core &bull; Defender Active &bull; Zero Bots
+        </div>
+    </div>
+
+    <script>
+        let currentEngine = localStorage.getItem('imperial_search_engine') || 'Google';
+
+        function updateEngineUI() {
+            document.getElementById('currentEngineName').innerText = currentEngine;
+            document.querySelectorAll('.engine-option').forEach(el => {
+                if (el.innerText.trim().toLowerCase() === currentEngine.toLowerCase()) {
+                    el.classList.add('active');
+                } else {
+                    el.classList.remove('active');
+                }
+            });
+        }
+        updateEngineUI();
+
+        function toggleEngineDropdown() {
+            playBeep();
+            const d = document.getElementById('engineDropdown');
+            d.classList.toggle('show');
+        }
+
+        window.onclick = function(event) {
+            if (!event.target.closest('.engine-selector')) {
+                document.getElementById('engineDropdown').classList.remove('show');
+            }
+        };
+
+        function selectEngine(name) {
+            playBeep();
+            currentEngine = name;
+            localStorage.setItem('imperial_search_engine', name);
+            updateEngineUI();
+            document.getElementById('engineDropdown').classList.remove('show');
+            // Notify browser backend
+            window.location.href = "imperial://set-engine?name=" + encodeURIComponent(name);
+        }
+
+        function executeSearch() {
+            playBeep();
+            const query = document.getElementById('queryInput').value.trim();
+            if (!query) return;
+
+            // Direct URL vs Query Search
+            if (query.startsWith('http://') || query.startsWith('https://')) {
+                window.location.href = query;
+            } else if (/^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(\/.*)?$/.test(query) && !query.includes(' ')) {
+                window.location.href = 'https://' + query;
+            } else {
+                // Forward query to Python backend with selected engine
+                window.location.href = "imperial://search?engine=" + encodeURIComponent(currentEngine) + "&q=" + encodeURIComponent(query);
+            }
+        }
+
+        document.getElementById('queryInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                executeSearch();
+            }
+        });
+
+        // Sci-Fi Sound Synthesizer
+        let audioCtx = null;
+        function playBeep() {
+            try {
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(200, audioCtx.currentTime + 0.08);
+                gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.08);
+            } catch (e) {}
+        }
+    </script>
+</body>
+</html>

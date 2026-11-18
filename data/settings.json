@@ -1,0 +1,25 @@
+{
+    "homepage": "imperial://newtab",
+    "search_engine": "Google",
+    "search_engines": {
+        "Google": "https://www.google.com/search?q={query}",
+        "DuckDuckGo": "https://duckduckgo.com/?q={query}",
+        "Brave": "https://search.brave.com/search?q={query}",
+        "Bing": "https://www.bing.com/search?q={query}",
+        "Startpage": "https://www.startpage.com/sp/search?query={query}"
+    },
+    "adblock_enabled": true,
+    "cosmetic_filtering": true,
+    "tracker_blocking": true,
+    "malware_protection": true,
+    "virus_scan_downloads": true,
+    "windows_defender_scan": true,
+    "ram_saver_enabled": true,
+    "tab_hibernation_minutes": 5,
+    "max_renderer_processes": 3,
+    "dark_mode_forced": false,
+    "sound_effects": true,
+    "theme": "Rev_Imperial_Crimson",
+    "window_width": 1360,
+    "window_height": 860
+}

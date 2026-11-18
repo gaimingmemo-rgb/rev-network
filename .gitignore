@@ -1,0 +1,22 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.cpython-*.pyc
+
+# PyInstaller / Build artifacts
+build/
+dist/
+*.log
+payload.zip
+rev_network_payload.zip
+
+# Runtime user web storage and telemetry
+data/web_storage/
+data/quarantine/
+*.tmp
+
+# Environment and IDE
+.vscode/
+.idea/
+.env

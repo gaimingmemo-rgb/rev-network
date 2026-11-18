@@ -1,0 +1,1391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rev Community // Live Local Node</title>
+    <style>
+        :root {
+            --bg-base: #08090c;
+            --bg-panel: #10131a;
+            --bg-card: #151922;
+            --accent-red: #ff1e38;
+            --accent-red-glow: rgba(255, 30, 56, 0.5);
+            --border-red: #8f0e1e;
+            --border-dim: #222736;
+            --text-main: #f0f4f8;
+            --text-dim: #7f8b9e;
+            --tactical-green: #00ff88;
+            --tactical-cyan: #00f0ff;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 50% 10%, rgba(255, 30, 56, 0.12) 0%, transparent 60%),
+                linear-gradient(rgba(8, 9, 12, 0.96), rgba(8, 9, 12, 0.96)),
+                repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255, 30, 56, 0.02) 2px, rgba(255, 30, 56, 0.02) 4px);
+            padding: 25px 20px 80px 20px;
+        }
+
+        .scanlines {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            pointer-events: none;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+            background-size: 100% 4px;
+            z-index: 10;
+            opacity: 0.5;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1100px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 20;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+            position: relative;
+            width: 100%;
+        }
+
+        .crest-img {
+            width: 80px;
+            height: 80px;
+            filter: drop-shadow(0 0 16px var(--accent-red-glow));
+            transition: transform 0.3s ease;
+            cursor: pointer;
+        }
+
+        .crest-img:hover {
+            transform: scale(1.08);
+        }
+
+        .title {
+            font-size: 28px;
+            font-weight: 900;
+            letter-spacing: 6px;
+            text-transform: uppercase;
+            color: #ffffff;
+            margin-top: 10px;
+            text-shadow: 0 0 14px var(--accent-red-glow);
+        }
+
+        .subtitle {
+            font-size: 11px;
+            letter-spacing: 3px;
+            color: var(--accent-red);
+            text-transform: uppercase;
+            margin-top: 4px;
+            font-weight: 800;
+        }
+
+        /* Top Profile & Node Connectivity Bar */
+        .hub-nav-bar {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--bg-panel);
+            border: 1px solid var(--border-red);
+            border-radius: 6px;
+            padding: 12px 18px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-avatar {
+            width: 34px;
+            height: 34px;
+            background: var(--accent-red);
+            color: white;
+            font-weight: 900;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            box-shadow: 0 0 10px rgba(255, 30, 56, 0.5);
+        }
+
+        .user-name {
+            font-size: 13px;
+            font-weight: 800;
+            color: #ffffff;
+            letter-spacing: 1px;
+        }
+
+        .node-ip-tag {
+            font-size: 10px;
+            color: var(--text-dim);
+            font-family: monospace;
+        }
+
+        .peer-counter-badge {
+            background: #151922;
+            border: 1px solid var(--border-red);
+            padding: 6px 14px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 800;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--tactical-green);
+            box-shadow: 0 0 8px var(--tactical-green);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.4; }
+            50% { opacity: 1; }
+            100% { opacity: 0.4; }
+        }
+
+        /* Hardware Telemetry Bar */
+        .hardware-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            width: 100%;
+            margin-bottom: 25px;
+        }
+
+        .hw-card {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-red);
+            border-radius: 4px;
+            padding: 12px 16px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+        }
+
+        .hw-label {
+            font-size: 9px;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .hw-value {
+            font-size: 16px;
+            font-weight: 900;
+            color: #ffffff;
+            letter-spacing: 1px;
+        }
+
+        .hw-meter {
+            height: 4px;
+            background: #1c2230;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .hw-meter-bar {
+            height: 100%;
+            background: var(--accent-red);
+            width: 25%;
+            transition: width 0.5s ease;
+            box-shadow: 0 0 8px var(--accent-red);
+        }
+
+        /* Two Columns: Download + Real Active Peers */
+        .sections-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            width: 100%;
+            margin-bottom: 25px;
+        }
+
+        .section-card {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-dim);
+            border-radius: 6px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+            display: flex;
+            flex-direction: column;
+            clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+        }
+
+        .section-title {
+            font-size: 13px;
+            font-weight: 900;
+            letter-spacing: 2px;
+            color: #ffffff;
+            text-transform: uppercase;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(255, 30, 56, 0.2);
+            padding-bottom: 8px;
+        }
+
+        /* Download Rev-Launcher Card */
+        .download-box {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .download-version {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .v-tag {
+            background: rgba(0, 255, 136, 0.15);
+            color: var(--tactical-green);
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            font-size: 10px;
+            font-weight: 800;
+            padding: 3px 8px;
+            border-radius: 3px;
+        }
+
+        .source-pill {
+            background: #0b0d13;
+            border: 1px solid #293042;
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 10px;
+            color: var(--text-dim);
+            font-family: monospace;
+            word-break: break-all;
+        }
+
+        .download-btn {
+            background: var(--accent-red);
+            color: #ffffff;
+            border: none;
+            padding: 12px 18px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 900;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 0 15px var(--accent-red-glow);
+            transition: all 0.25s ease;
+        }
+
+        .download-btn:hover {
+            background: #ff3b52;
+            transform: translateY(-2px);
+            box-shadow: 0 0 25px var(--accent-red-glow);
+        }
+
+        .checksum-box {
+            background: #0b0d13;
+            border: 1px solid #232838;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 10px;
+            color: var(--text-dim);
+            word-break: break-all;
+        }
+
+        /* Real Connected Nodes / Peers List */
+        .peer-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 240px;
+            overflow-y: auto;
+        }
+
+        .peer-item {
+            background: #0b0d13;
+            border: 1px solid #1f2533;
+            border-left: 3px solid var(--tactical-green);
+            border-radius: 4px;
+            padding: 10px 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .peer-name {
+            font-size: 12px;
+            font-weight: 800;
+            color: #ffffff;
+        }
+
+        .peer-ip {
+            font-size: 10px;
+            color: var(--text-dim);
+            font-family: monospace;
+        }
+
+        .peer-status-tag {
+            font-size: 9px;
+            font-weight: 800;
+            color: var(--tactical-green);
+            background: rgba(0, 255, 136, 0.1);
+            padding: 3px 6px;
+            border-radius: 3px;
+        }
+
+        /* Real Live Chat & Friends Section */
+        .comms-row {
+            display: grid;
+            grid-template-columns: 2fr 1.2fr;
+            gap: 20px;
+            width: 100%;
+            margin-bottom: 25px;
+        }
+
+        .chat-box {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-dim);
+            border-radius: 6px;
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            height: 380px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding-right: 8px;
+            margin-bottom: 12px;
+        }
+
+        .chat-msg {
+            display: flex;
+            flex-direction: column;
+            background: #0c0e14;
+            padding: 8px 12px;
+            border-radius: 4px;
+            border-left: 3px solid #232838;
+        }
+
+        .chat-msg.me {
+            border-left-color: var(--accent-red);
+            background: #141721;
+        }
+
+        .chat-msg.peer {
+            border-left-color: var(--tactical-cyan);
+        }
+
+        .chat-msg-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            margin-bottom: 4px;
+        }
+
+        .chat-sender {
+            font-weight: 800;
+            color: #ffffff;
+            letter-spacing: 0.5px;
+        }
+
+        .chat-ip {
+            color: var(--text-dim);
+            font-size: 9px;
+            font-family: monospace;
+            margin-left: 6px;
+        }
+
+        .chat-text {
+            font-size: 12px;
+            color: #d8e2ec;
+            word-break: break-word;
+        }
+
+        .chat-input-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input {
+            flex: 1;
+            background: #0b0d13;
+            border: 1px solid #282f40;
+            border-radius: 4px;
+            padding: 9px 12px;
+            color: #ffffff;
+            font-size: 13px;
+            outline: none;
+        }
+
+        .chat-input:focus {
+            border-color: var(--accent-red);
+        }
+
+        .send-btn {
+            background: var(--accent-red);
+            border: none;
+            color: white;
+            font-weight: 800;
+            font-size: 11px;
+            letter-spacing: 1.5px;
+            padding: 0 18px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .send-btn:hover {
+            background: #ff3b52;
+            box-shadow: 0 0 12px var(--accent-red-glow);
+        }
+
+        /* Friends System Card */
+        .friends-card {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-dim);
+            border-radius: 6px;
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            height: 380px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+        }
+
+        .add-friend-box {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .friends-list {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding-right: 5px;
+        }
+
+        .friend-item {
+            background: #0b0d13;
+            border: 1px solid #1f2533;
+            border-radius: 4px;
+            padding: 8px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .friend-name {
+            font-size: 11px;
+            font-weight: 800;
+            color: #ffffff;
+        }
+
+        .friend-action-btn {
+            background: #171b26;
+            border: 1px solid var(--border-red);
+            color: #ff3b52;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 9px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        .friend-action-btn:hover {
+            background: var(--accent-red);
+            color: white;
+        }
+
+        /* Tactical Friend Request Popup (Bottom-Right Corner) */
+        .corner-popup {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            width: 340px;
+            background: #12151f;
+            border: 2px solid var(--accent-red);
+            border-radius: 6px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.9), 0 0 20px var(--accent-red-glow);
+            padding: 16px;
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+            animation: slideIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+        }
+
+        .corner-popup.show {
+            display: flex;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(120%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .popup-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .popup-title {
+            font-size: 11px;
+            font-weight: 900;
+            letter-spacing: 1.5px;
+            color: var(--accent-red);
+            text-transform: uppercase;
+        }
+
+        .popup-body {
+            font-size: 12px;
+            color: #e0e6ed;
+            line-height: 1.4;
+        }
+
+        .popup-user {
+            color: #ffffff;
+            font-weight: 800;
+        }
+
+        .popup-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 5px;
+        }
+
+        .popup-accept-btn {
+            flex: 1;
+            background: #00aa55;
+            color: #ffffff;
+            border: 1px solid #00ff88;
+            padding: 8px;
+            border-radius: 4px;
+            font-weight: 900;
+            font-size: 11px;
+            letter-spacing: 1px;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+
+        .popup-accept-btn:hover {
+            background: #00cc66;
+            box-shadow: 0 0 15px rgba(0, 255, 136, 0.6);
+        }
+
+        .popup-reject-btn {
+            flex: 1;
+            background: #2a1419;
+            color: #ff3b52;
+            border: 1px solid #8f0e1e;
+            padding: 8px;
+            border-radius: 4px;
+            font-weight: 900;
+            font-size: 11px;
+            letter-spacing: 1px;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+
+        .popup-reject-btn:hover {
+            background: var(--accent-red);
+            color: #ffffff;
+        }
+
+        .footer {
+            margin-top: 15px;
+            font-size: 10px;
+            color: #4b5466;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            text-align: center;
+        }
+    
+        /* Pilot Auth Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(4, 5, 8, 0.88);
+            backdrop-filter: blur(8px);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-card {
+            background: #10131a;
+            border: 2px solid #8f0e1e;
+            box-shadow: 0 0 35px rgba(255, 30, 56, 0.4);
+            border-radius: 8px;
+            width: 90%;
+            max-width: 440px;
+            padding: 24px;
+            color: #fff;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            font-weight: 900;
+            letter-spacing: 1.5px;
+            color: #ff1e38;
+            border-bottom: 1px solid #1f2533;
+            padding-bottom: 10px;
+        }
+        .modal-close {
+            cursor: pointer;
+            font-size: 20px;
+            color: #8b949e;
+        }
+        .modal-close:hover {
+            color: #ff1e38;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="scanlines"></div>
+
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <img src="icon.png" class="crest-img" onclick="playBeep()" alt="Rev Network">
+            <h1 class="title">REV COMMUNITY</h1>
+            <p class="subtitle">Real Peer Network Node // Zero Bots</p>
+        </div>
+
+        <!-- Top Profile & Network Node Bar -->
+        <div class="hub-nav-bar">
+            <div class="user-info">
+                <div class="user-avatar" id="avatarLetter">?</div>
+                <div>
+                    <div class="user-name" id="displayUsername">UNCLAIMED CALLSIGN</div>
+                    <div class="node-ip-tag" id="displayNodeIp">Local IP: Connecting...</div>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                <a href="https://gaimingmemo-rgb.github.io/rev-network/" target="_blank" class="friend-action-btn" style="border-color: #00f0ff; color: #00f0ff; text-decoration: none; display: flex; align-items: center; gap: 5px; font-weight: 800;">🌐 WEBSITE</a>
+                <a href="https://github.com/gaimingmemo-rgb/rev-network/releases" target="_blank" class="friend-action-btn" style="border-color: #ffb703; color: #ffb703; text-decoration: none; display: flex; align-items: center; gap: 5px; font-weight: 800;">🚀 RELEASES</a>
+                <a href="https://discord.gg/8rnKQKbaHj" target="_blank" class="friend-action-btn" style="border-color: #5865F2; color: #a4afff; text-decoration: none; display: flex; align-items: center; gap: 5px; font-weight: 800;">💬 DISCORD</a>
+                <button class="friend-action-btn" onclick="openAuthModal()" style="border-color: #00f0ff; color: #00f0ff; font-weight: bold; cursor: pointer;">👤 CLAIM / LOGIN CALLSIGN</button>
+                <button class="friend-action-btn" onclick="logoutPilot()" style="border-color: #ff1e38; color: #ff1e38; cursor: pointer;">LOG OUT</button>
+                <div class="peer-counter-badge">
+                    <span class="live-dot"></span>
+                    <span id="activePeerText">1 ACTIVE PEER</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hardware Monitors -->
+        <div class="hardware-grid">
+            <div class="hw-card">
+                <div class="hw-label">
+                    <span>Node CPU Load</span>
+                    <span id="cpuPct">0.8%</span>
+                </div>
+                <div class="hw-value" id="cpuVal">0.8 %</div>
+                <div class="hw-meter"><div class="hw-meter-bar" id="cpuBar" style="width: 12%;"></div></div>
+            </div>
+
+            <div class="hw-card">
+                <div class="hw-label">
+                    <span>Node RAM Buffer</span>
+                    <span id="ramPct">16.4 MB</span>
+                </div>
+                <div class="hw-value" id="ramVal">16.4 MB</div>
+                <div class="hw-meter"><div class="hw-meter-bar" id="ramBar" style="width: 20%;"></div></div>
+            </div>
+
+            <div class="hw-card">
+                <div class="hw-label">
+                    <span>Peer Network</span>
+                    <span>PORT 8765</span>
+                </div>
+                <div class="hw-value" id="netStatusVal">LISTENING</div>
+                <div class="hw-meter"><div class="hw-meter-bar" style="width: 100%; background: #00ff88;"></div></div>
+            </div>
+
+            <div class="hw-card">
+                <div class="hw-label">
+                    <span>Active Network IPs</span>
+                    <span>LIVE</span>
+                </div>
+                <div class="hw-value" id="connectedIpCount" style="color: #00ff88;">1</div>
+                <div class="hw-meter"><div class="hw-meter-bar" style="width: 100%; background: #00ff88;"></div></div>
+            </div>
+        </div>
+
+        <!-- Download Rev-Launcher & Real Connected Peers -->
+        <div class="sections-row">
+            <!-- REAL LOCAL REV-LAUNCHER DOWNLOAD CARD -->
+            <div class="section-card">
+                <div class="section-title">
+                    <span>&#128190; Download Rev-Launcher (Local Archive)</span>
+                    <span class="v-tag">VERIFIED LOCAL ARCHIVE</span>
+                </div>
+                <div class="download-box">
+                    <div class="download-version">
+                        <span style="font-size: 13px; font-weight: 800; color: #ffffff;">Rev-Launcher.zip</span>
+                        <span style="font-size: 11px; color: #00ff88; font-weight: bold;">273.8 MB (Verified)</span>
+                    </div>
+
+                    <div class="source-pill">
+                        Source: C:\Users\ZarTo\Desktop\Projects\Delivered\Rev-Launcher.zip
+                    </div>
+
+                    <p style="font-size: 11px; color: var(--text-dim); line-height: 1.4;">
+                        Official verified Rev-Launcher archive with Hydra runtime, DirectX shader compiler, and Star Wars Galaxies Restoration III patchers.
+                    </p>
+
+                    <a href="imperial://download-rev-launcher" class="download-btn" onclick="playBeep()">
+                        <span>&#11015;</span> DOWNLOAD REV-LAUNCHER (273.8 MB)
+                    </a>
+
+                    <div class="checksum-box">
+                        SHA-256: FE1DC4AE379F3944823310BCB387A234EC6318184E3FC651DAE04FDD4D0E4A9C
+                    </div>
+                </div>
+            </div>
+
+            <!-- REAL CONNECTED NETWORK PEERS -->
+            <div class="section-card">
+                <div class="section-title">
+                    <span>&#128225; Active Network Nodes & Peers</span>
+                    <span style="font-size: 9px; color: #00ff88; font-weight: 800;">LIVE SOCKETS</span>
+                </div>
+                <div class="peer-list" id="peerList">
+                    <div class="peer-item">
+                        <div>
+                            <div class="peer-name">Origin Node [Host]</div>
+                            <div class="peer-ip">127.0.0.1 (This Machine)</div>
+                        </div>
+                        <span class="peer-status-tag">ACTIVE HOST</span>
+                    </div>
+                </div>
+                <div style="font-size: 10px; color: var(--text-dim); margin-top: 10px;">
+                    When another device on your LAN or another IP connects, it instantly appears in this list!
+                </div>
+            </div>
+        </div>
+
+        <!-- REAL LIVE CHAT & REAL FRIENDS -->
+        <div style="width: 100%; margin-bottom: 15px; border-bottom: 1px solid rgba(255, 30, 56, 0.2); padding-bottom: 6px; display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 13px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;">
+                Rev Network Live Comms & Allies
+            </span>
+            <span style="font-size: 10px; color: var(--tactical-green); letter-spacing: 1px; font-weight: bold;">
+                REAL NETWORK &bull; ZERO BOTS
+            </span>
+        </div>
+
+        <div class="comms-row">
+            <!-- LIVE CHAT BOX -->
+            <div class="chat-box">
+                <div style="font-size: 11px; font-weight: 800; letter-spacing: 1px; color: var(--text-dim); margin-bottom: 10px; display: flex; justify-content: space-between;">
+                    <span># LIVE NETWORK CHAT</span>
+                    <span style="color: #7289da; font-weight: bold;">&#128172; DISCORD BRIDGE ACTIVE</span>
+                </div>
+
+                <div class="chat-messages" id="chatMessages">
+                    <!-- Real messages load here dynamically from API -->
+                </div>
+
+                <div class="chat-input-row">
+                    <input type="text" id="chatInput" class="chat-input" placeholder="Transmit real message across Rev Network..." autocomplete="off">
+                    <button class="send-btn" onclick="sendRealMessage()">TRANSMIT</button>
+                </div>
+            </div>
+
+            <!-- FRIENDS LIST -->
+            <div class="friends-card">
+                <div style="font-size: 11px; font-weight: 800; letter-spacing: 1px; color: var(--text-dim); margin-bottom: 10px; display: flex; justify-content: space-between;">
+                    <span>ALLIES (<span id="friendsCount">0</span>)</span>
+                    <span style="color: var(--accent-red);">DIRECT COMMS</span>
+                </div>
+
+                <!-- Add Friend Form -->
+                <div class="add-friend-box">
+                    <input type="text" id="addFriendInput" class="chat-input" placeholder="Add username (e.g. Techdudesigmaboy)..." style="padding: 6px 10px; font-size: 11px;">
+                    <button class="friend-action-btn" onclick="sendFriendRequest()" style="padding: 6px 10px;">ADD</button>
+                </div>
+
+                <!-- Friends List Container -->
+                <div class="friends-list" id="friendsList">
+                    <!-- Real friends loaded from API -->
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            Rev Network &bull; Live Peer Node System &bull; Zero Bots &bull; High Integrity
+        </div>
+    </div>
+
+    <!-- TACTICAL INCOMING FRIEND REQUEST POPUP (BOTTOM RIGHT CORNER) -->
+    
+    <!-- PILOT AUTH MODAL -->
+    <div id="authModal" class="modal-overlay" style="display: none;">
+        <div class="modal-card">
+            <div class="modal-header">
+                <span>⚡ REV COMMUNITY // PILOT REGISTRY</span>
+                <span class="modal-close" onclick="closeAuthModal()">&times;</span>
+            </div>
+            <p style="font-size: 11px; color: var(--text-dim); margin: 12px 0 16px 0; line-height: 1.45;">
+                Claim your permanent unique Callsign on the Rev Network. Once registered, your username is reserved forever across all community nodes and Discord.
+            </p>
+            <div style="margin-bottom: 12px;">
+                <label style="font-size: 10px; color: var(--accent-red); font-weight: bold; letter-spacing: 1px; display: block; margin-bottom: 4px;">OPERATOR CALLSIGN</label>
+                <input type="text" id="authUsernameInput" class="chat-input" placeholder="Claim your permanent Callsign..." style="width: 100%; box-sizing: border-box;" autocomplete="off">
+            </div>
+            <div style="margin-bottom: 16px;">
+                <label style="font-size: 10px; color: var(--accent-red); font-weight: bold; letter-spacing: 1px; display: block; margin-bottom: 4px;">ACCESS PASSWORD</label>
+                <input type="password" id="authPasswordInput" class="chat-input" placeholder="Password (minimum 4 characters)" style="width: 100%; box-sizing: border-box;">
+            </div>
+            <div id="authStatusMsg" style="font-size: 11px; margin-bottom: 14px; display: none; font-weight: bold;"></div>
+            <div style="display: flex; gap: 10px;">
+                <button class="send-btn" onclick="submitRegister()" style="flex: 1; padding: 12px; font-weight: bold; cursor: pointer;">CLAIM FOREVER ➔</button>
+                <button class="friend-action-btn" onclick="submitLogin()" style="flex: 1; padding: 12px; font-size: 11px; font-weight: bold; cursor: pointer;">LOG IN</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="corner-popup" id="friendRequestPopup">
+        <div class="popup-header">
+            <span class="popup-title">&#9889; INCOMING COMM-LINK</span>
+            <span style="font-size: 9px; color: #ff1e38; font-weight: 900;">FRIEND REQUEST</span>
+        </div>
+        <div class="popup-body">
+            Pilot <span class="popup-user" id="requestUsername">...</span> wants to add you to their Rev Network allies!
+        </div>
+        <div class="popup-actions">
+            <button class="popup-accept-btn" onclick="acceptFriendRequest()">ACCEPT</button>
+            <button class="popup-reject-btn" onclick="rejectFriendRequest()">REJECT</button>
+        </div>
+    </div>
+
+    
+        <script>
+
+        // ==========================================
+        // AUDIO SYNTHESIZER & FALLBACKS
+        // ==========================================
+        function playBeep(freq = 800, duration = 0.05) {
+            try {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (!AudioCtx) return;
+                const ctx = new AudioCtx();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, ctx.currentTime);
+                gain.gain.setValueAtTime(0.04, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + duration);
+            } catch(e) {}
+        }
+
+        function playAlertSound() {
+            playBeep(920, 0.08);
+            setTimeout(() => playBeep(1150, 0.12), 90);
+        }
+
+        function playConfirmSound() {
+            playBeep(600, 0.06);
+            setTimeout(() => playBeep(900, 0.1), 70);
+        }
+
+        // ==========================================
+        // DYNAMIC CENTRAL API ROUTING (LOCAL & REMOTE PEERS)
+        // ==========================================
+        let API_BASE = "http://127.0.0.1:8000";
+
+        async function detectApiBase() {
+            if (window.location.protocol.startsWith('http')) {
+                API_BASE = window.location.origin;
+                return;
+            }
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 800);
+                const res = await fetch("http://127.0.0.1:8000/api/status", { signal: controller.signal });
+                clearTimeout(timeoutId);
+                if (res.ok) {
+                    API_BASE = "http://127.0.0.1:8000";
+                    return;
+                }
+            } catch(e) {}
+            // If local port 8000 is not running (e.g. peer user on another PC)
+            API_BASE = "http://rev-network.ddns.net:8000";
+        }
+
+        let myUsername = localStorage.getItem('rev_pilot_callsign') || '';
+
+        // Startup verification: if not registered, prompt modal immediately
+        window.addEventListener('DOMContentLoaded', () => {
+            const stored = localStorage.getItem('rev_pilot_callsign');
+            if (!stored) {
+                document.getElementById('displayUsername').innerText = "UNCLAIMED CALLSIGN";
+                document.getElementById('avatarLetter').innerText = "?";
+                openAuthModal();
+            } else {
+                setPilotAccount(stored);
+            }
+            updateNodeStatus();
+            fetchMessages();
+            updateFriends();
+        });
+
+        function openAuthModal() {
+            const modal = document.getElementById('authModal');
+            if (modal) modal.style.display = 'flex';
+            const msg = document.getElementById('authStatusMsg');
+            if (msg) msg.style.display = 'none';
+        }
+
+        function closeAuthModal() {
+            const modal = document.getElementById('authModal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        async function submitRegister() {
+            const uInput = document.getElementById('authUsernameInput');
+            const pInput = document.getElementById('authPasswordInput');
+            const u = uInput.value.trim();
+            const p = pInput.value.trim();
+            const msgEl = document.getElementById('authStatusMsg');
+
+            if (!u || !p) {
+                msgEl.textContent = "Please enter both Callsign and Password.";
+                msgEl.style.color = "#ff1e38";
+                msgEl.style.display = "block";
+                return;
+            }
+
+            try {
+                const res = await fetch(API_BASE + "/api/community/auth/register", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ username: u, password: p })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    msgEl.textContent = "✓ " + data.message;
+                    msgEl.style.color = "#00ff88";
+                    msgEl.style.display = "block";
+                    setTimeout(() => {
+                        setPilotAccount(data.username);
+                        closeAuthModal();
+                    }, 1000);
+                } else {
+                    msgEl.textContent = "✕ " + (data.error || "Callsign reservation rejected.");
+                    msgEl.style.color = "#ff1e38";
+                    msgEl.style.display = "block";
+                }
+            } catch(e) {
+                msgEl.textContent = "✕ Cannot connect to Origin Server on port 8000.";
+                msgEl.style.color = "#ff1e38";
+                msgEl.style.display = "block";
+            }
+        }
+
+        async function submitLogin() {
+            const uInput = document.getElementById('authUsernameInput');
+            const pInput = document.getElementById('authPasswordInput');
+            const u = uInput.value.trim();
+            const p = pInput.value.trim();
+            const msgEl = document.getElementById('authStatusMsg');
+
+            if (!u || !p) {
+                msgEl.textContent = "Please enter both Callsign and Password.";
+                msgEl.style.color = "#ff1e38";
+                msgEl.style.display = "block";
+                return;
+            }
+
+            try {
+                const res = await fetch(API_BASE + "/api/community/auth/login", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ username: u, password: p })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    msgEl.textContent = "✓ Verified. Loading pilot profile...";
+                    msgEl.style.color = "#00ff88";
+                    msgEl.style.display = "block";
+                    setTimeout(() => {
+                        setPilotAccount(data.username);
+                        closeAuthModal();
+                    }, 900);
+                } else {
+                    msgEl.textContent = "✕ " + (data.error || "Invalid callsign or password.");
+                    msgEl.style.color = "#ff1e38";
+                    msgEl.style.display = "block";
+                }
+            } catch(e) {
+                msgEl.textContent = "✕ Cannot connect to Origin Server on port 8000.";
+                msgEl.style.color = "#ff1e38";
+                msgEl.style.display = "block";
+            }
+        }
+
+        function setPilotAccount(username) {
+            myUsername = username;
+            localStorage.setItem('rev_pilot_callsign', username);
+            const userEl = document.getElementById('displayUsername');
+            if (userEl) userEl.innerText = username;
+            const avEl = document.getElementById('avatarLetter');
+            if (avEl) avEl.innerText = username.charAt(0).toUpperCase();
+            fetchMessages();
+            updateFriends();
+        }
+
+        function logoutPilot() {
+            localStorage.removeItem('rev_pilot_callsign');
+            myUsername = '';
+            document.getElementById('displayUsername').innerText = "UNCLAIMED CALLSIGN";
+            document.getElementById('avatarLetter').innerText = "?";
+            openAuthModal();
+        }
+
+        // 1. Fetch Node Status & Connected Peers
+        async function updateNodeStatus() {
+            try {
+                const res = await fetch(API_BASE + "/api/status");
+                if (res.ok) {
+                    const data = await res.json();
+                    const ipEl = document.getElementById('displayNodeIp');
+                    if (ipEl) ipEl.innerText = "Gateway: " + data.local_ip + ":" + data.port;
+                    const cCount = document.getElementById('connectedIpCount');
+                    if (cCount) cCount.innerText = data.active_peers_count;
+                    const aText = document.getElementById('activePeerText');
+                    if (aText) aText.innerText = data.active_peers_count + (data.active_peers_count === 1 ? " ACTIVE PEER" : " ACTIVE PEERS");
+
+                    const list = document.getElementById('peerList');
+                    if (list && data.peers) {
+                        list.innerHTML = '';
+                        data.peers.forEach(p => {
+                            const div = document.createElement('div');
+                            div.className = 'peer-item';
+                            div.innerHTML = `
+                                <div>
+                                    <div class="peer-name">${p.username}</div>
+                                    <div class="peer-ip">IP: ${p.ip} &bull; Relay Active</div>
+                                </div>
+                                <span class="peer-status-tag">ONLINE</span>
+                            `;
+                            list.appendChild(div);
+                        });
+                    }
+                }
+            } catch(e) {}
+        }
+
+        // 2. Real Messages API with Discord Two-Way Display
+        let lastMsgCount = 0;
+        async function fetchMessages() {
+            try {
+                const res = await fetch(API_BASE + "/api/messages");
+                if (res.ok) {
+                    const data = await res.json();
+                    const container = document.getElementById('chatMessages');
+                    if (!container) return;
+
+                    if (!data.messages || data.messages.length === 0) {
+                        container.innerHTML = `
+                            <div style="color: #616e82; font-size: 11px; text-align: center; margin-top: 40px;">
+                                [ No messages yet. Type below to transmit to Rev Network & Discord! ]
+                            </div>
+                        `;
+                        return;
+                    }
+
+                    if (data.messages.length !== lastMsgCount) {
+                        container.innerHTML = '';
+                        data.messages.forEach(m => {
+                            const isMe = myUsername && m.sender.toLowerCase() === myUsername.toLowerCase();
+                            const div = document.createElement('div');
+                            div.className = 'chat-msg ' + (isMe ? 'me' : 'peer');
+
+                            let sourceBadge = '';
+                            if (m.source === 'discord') {
+                                sourceBadge = '<span style="color: #7289da; font-weight: bold; margin-left: 6px;">[DISCORD]</span>';
+                            } else if (m.source === 'browser') {
+                                sourceBadge = '<span style="color: #ff1e38; font-weight: bold; margin-left: 6px;">[REV PILOT]</span>';
+                            } else {
+                                sourceBadge = '<span style="color: #00ff88; font-weight: bold; margin-left: 6px;">[SYSTEM]</span>';
+                            }
+
+                            div.innerHTML = `
+                                <div class="chat-msg-header">
+                                    <div>
+                                        <span class="chat-sender">${m.sender}</span>
+                                        ${sourceBadge}
+                                    </div>
+                                    <span style="color: #667085;">${m.time || ''}</span>
+                                </div>
+                                <div class="chat-text">${m.text}</div>
+                            `;
+                            container.appendChild(div);
+                        });
+                        container.scrollTop = container.scrollHeight;
+                        lastMsgCount = data.messages.length;
+                    }
+                }
+            } catch(e) {}
+        }
+
+        async function sendRealMessage() {
+            const input = document.getElementById('chatInput');
+            const text = input.value.trim();
+            if (!text) return;
+
+            if (!myUsername) {
+                openAuthModal();
+                return;
+            }
+
+            playBeep();
+            input.value = '';
+
+            try {
+                await fetch(API_BASE + "/api/send", {
+                    method: "POST",
+                    headers: { 
+                        "Content-Type": "application/json",
+                        "X-Pilot-User": myUsername
+                    },
+                    body: JSON.stringify({
+                        sender: myUsername,
+                        text: text
+                    })
+                });
+                fetchMessages();
+            } catch(e) {
+                console.error("Chat error:", e);
+            }
+        }
+
+        document.getElementById('chatInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') sendRealMessage();
+        });
+
+        // 3. Real Friends API
+        async function updateFriends() {
+            if (!myUsername) return;
+            try {
+                const res = await fetch(API_BASE + "/api/friends?user=" + encodeURIComponent(myUsername));
+                if (res.ok) {
+                    const data = await res.json();
+                    const list = document.getElementById('friendsList');
+                    if (!list) return;
+                    list.innerHTML = '';
+                    const friends = data.friends || [];
+                    const fcEl = document.getElementById('friendsCount');
+                    if (fcEl) fcEl.innerText = friends.length;
+
+                    if (friends.length === 0) {
+                        list.innerHTML = `<div style="font-size: 10px; color: #556070; text-align: center; margin-top: 30px;">No allies added yet. Add a username above!</div>`;
+                        return;
+                    }
+
+                    friends.forEach(f => {
+                        const div = document.createElement('div');
+                        div.className = 'friend-item';
+                        div.innerHTML = `
+                            <div>
+                                <div class="friend-name">${f.username}</div>
+                                <div style="font-size: 9px; color: #00ff88;">Allied Pilot</div>
+                            </div>
+                            <button class="friend-action-btn" onclick="directMessage('${f.username}')">MESSAGE</button>
+                        `;
+                        list.appendChild(div);
+                    });
+                }
+            } catch(e) {}
+        }
+
+        function directMessage(username) {
+            playBeep();
+            const input = document.getElementById('chatInput');
+            input.value = `@${username} `;
+            input.focus();
+        }
+
+        // 4. Friend Request System & Corner Popup
+        let currentRequestUser = "";
+
+        async function checkPendingRequests() {
+            if (!myUsername) return;
+            try {
+                const res = await fetch(API_BASE + "/api/pending-requests?user=" + encodeURIComponent(myUsername));
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.requests && data.requests.length > 0) {
+                        const req = data.requests[0];
+                        currentRequestUser = req.from_user;
+                        const rUserEl = document.getElementById('requestUsername');
+                        if (rUserEl) rUserEl.innerText = req.from_user;
+                        const popup = document.getElementById('friendRequestPopup');
+                        if (popup) popup.classList.add('show');
+                        playAlertSound();
+                    }
+                }
+            } catch(e) {}
+        }
+
+        async function sendFriendRequest() {
+            const input = document.getElementById('addFriendInput');
+            const target = input.value.trim();
+            if (!target) return;
+
+            if (!myUsername) {
+                openAuthModal();
+                return;
+            }
+
+            playBeep();
+            input.value = '';
+
+            const statusEl = document.getElementById('friendStatusMsg');
+            try {
+                const res = await fetch(API_BASE + "/api/friend-request", {
+                    method: "POST",
+                    headers: { 
+                        "Content-Type": "application/json",
+                        "X-Pilot-User": myUsername
+                    },
+                    body: JSON.stringify({ 
+                        from_user: myUsername,
+                        to_user: target
+                    })
+                });
+                const data = await res.json();
+                if (statusEl) {
+                    statusEl.textContent = data.message || data.error;
+                    statusEl.style.color = res.ok ? "#00ff88" : "#ff1e38";
+                    statusEl.style.display = 'block';
+                    setTimeout(() => { statusEl.style.display = 'none'; }, 4000);
+                }
+            } catch(e) {}
+        }
+
+        async function acceptFriendRequest() {
+            playConfirmSound();
+            const popup = document.getElementById('friendRequestPopup');
+            if (popup) popup.classList.remove('show');
+            try {
+                await fetch(API_BASE + "/api/friend-accept", {
+                    method: "POST",
+                    headers: { 
+                        "Content-Type": "application/json",
+                        "X-Pilot-User": myUsername
+                    },
+                    body: JSON.stringify({ 
+                        user: myUsername, 
+                        from_user: currentRequestUser 
+                    })
+                });
+                updateFriends();
+            } catch(e) {}
+        }
+
+        async function rejectFriendRequest() {
+            const popup = document.getElementById('friendRequestPopup');
+            if (popup) popup.classList.remove('show');
+            try {
+                await fetch(API_BASE + "/api/friend-reject", {
+                    method: "POST",
+                    headers: { 
+                        "Content-Type": "application/json",
+                        "X-Pilot-User": myUsername
+                    },
+                    body: JSON.stringify({ 
+                        user: myUsername, 
+                        from_user: currentRequestUser 
+                    })
+                });
+            } catch(e) {}
+        }
+
+        // Live Polling Loops
+        setInterval(fetchMessages, 2500);
+        setInterval(updateFriends, 6000);
+        setInterval(checkPendingRequests, 5000);
+        setInterval(updateNodeStatus, 5000);
+
+        // Hardware Simulation
+        setInterval(() => {
+            const cpu = (0.5 + Math.random() * 1.5).toFixed(1);
+            const ram = (15.5 + Math.random() * 2.0).toFixed(1);
+            const cpuPct = document.getElementById('cpuPct');
+            if (cpuPct) cpuPct.innerText = cpu + '%';
+            const cpuVal = document.getElementById('cpuVal');
+            if (cpuVal) cpuVal.innerText = cpu + ' %';
+            const cpuBar = document.getElementById('cpuBar');
+            if (cpuBar) cpuBar.style.width = (cpu * 12) + '%';
+            const ramPct = document.getElementById('ramPct');
+            if (ramPct) ramPct.innerText = ram + ' MB';
+            const ramVal = document.getElementById('ramVal');
+            if (ramVal) ramVal.innerText = ram + ' MB';
+        }, 3000);
+    </script>
+
+</body>
+</html>

@@ -8,7 +8,7 @@ from pathlib import Path
 block_cipher = None
 
 # Source root
-SRC = Path(r"C:\Users\ZarTo\.gemini\antigravity\scratch\imperial-browser")
+SRC = Path(r"C:\Users\ZarTo\Desktop\Projects\Rev-Network")
 
 a = Analysis(
     [str(SRC / "main.py")],
@@ -98,7 +98,7 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,     # onedir keeps DLLs alongside exe (required by QtWebEngine)
-    name="Rev-Network",
+    name="Revision-Web",
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -119,5 +119,5 @@ coll = COLLECT(
     strip=False,
     upx=True,
     upx_exclude=[],
-    name="Rev-Network",
+    name="Revision-Web",
 )

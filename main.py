@@ -34,7 +34,24 @@ from browser_window import ImperialBrowserWindow
 from config import ASSETS_DIR
 from rev_network_node import rev_server
 
+def _ensure_origin_server():
+    import socket, subprocess
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.settimeout(0.2)
+        res = s.connect_ex(("127.0.0.1", 8000))
+        s.close()
+        if res != 0:
+            website_server = Path(r"C:\Users\ZarTo\Desktop\Projects\Website\server.py")
+            if website_server.exists():
+                subprocess.Popen([sys.executable, str(website_server)], cwd=str(website_server.parent))
+    except Exception:
+        pass
+
 def main():
+    # Ensure Website Origin Server on port 8000 is running
+    _ensure_origin_server()
+
     # Start Rev-Network Interconnected P2P Node Server
     rev_server.start()
 

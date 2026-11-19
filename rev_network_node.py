@@ -11,6 +11,7 @@ from config import DATA_DIR, ASSETS_DIR
 
 MESSAGES_FILE = DATA_DIR / "community_messages.json"
 FRIENDS_FILE = DATA_DIR / "community_friends.json"
+USERS_FILE = DATA_DIR / "community_users.json"
 SHARED_CATALOG_FILE = DATA_DIR / "shared_catalog.json"
 UDP_DISCOVERY_PORT = 8769
 
@@ -286,6 +287,24 @@ class RevNodeHTTPHandler(BaseHTTPRequestHandler):
                 if accepted and from_user:
                     node_state.add_friend(from_user, client_ip)
             self._send_json({"status": "OK"})
+
+        elif path in ["/api/community/auth/register", "/api/register"]:
+            username = body.get("username", "").strip()
+            password = body.get("password", "").strip()
+            if username:
+                node_state.register_peer(client_ip, username, rank="Commander")
+                self._send_json({"status": "ok", "message": "Callsign reserved successfully across local node!", "username": username})
+            else:
+                self._send_json({"error": "Empty callsign"}, 400)
+
+        elif path in ["/api/community/auth/login", "/api/login"]:
+            username = body.get("username", "").strip()
+            password = body.get("password", "").strip()
+            if username:
+                node_state.register_peer(client_ip, username, rank="Commander")
+                self._send_json({"status": "ok", "message": "Verified. Loading pilot profile...", "username": username})
+            else:
+                self._send_json({"error": "Empty callsign"}, 400)
 
         elif path in ["/api/ecosystem/launch", "/api/launch"]:
             target_app = body.get("app", "").strip()

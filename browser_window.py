@@ -32,7 +32,7 @@ from settings_dialog import ImperialSettingsDialog
 class ShieldStatsDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("REV NETWORK // DEFENSE TELEMETRY")
+        self.setWindowTitle("REVISION-WEB // DEFENSE TELEMETRY")
         self.setFixedSize(460, 380)
         self.setStyleSheet("""
             QDialog {
@@ -124,7 +124,7 @@ class GoogleAuthDialog(QDialog):
     def __init__(self, parent=None, callback=None):
         super().__init__(parent)
         self.callback = callback
-        self.setWindowTitle("REV NETWORK // GOOGLE AUTHENTICATION CORE")
+        self.setWindowTitle("REVISION-WEB // GOOGLE AUTHENTICATION CORE")
         self.setFixedSize(540, 340)
         self.setStyleSheet("""
             QDialog {
@@ -213,7 +213,7 @@ class ExtensionsDialog(QDialog):
     def __init__(self, ext_manager: ImperialExtensionsManager, parent=None):
         super().__init__(parent)
         self.ext_manager = ext_manager
-        self.setWindowTitle("REV NETWORK // EXTENSIONS & SCRIPTS")
+        self.setWindowTitle("REVISION-WEB // EXTENSIONS & SCRIPTS")
         self.setFixedSize(580, 480)
         self.setStyleSheet("""
             QDialog {
@@ -378,7 +378,7 @@ class DownloadsDialog(QDialog):
     def __init__(self, downloads_history: list, parent=None):
         super().__init__(parent)
         self.downloads_history = downloads_history
-        self.setWindowTitle("REV NETWORK // DOWNLOADS & SCAN VAULT")
+        self.setWindowTitle("REVISION-WEB // DOWNLOADS & SCAN VAULT")
         self.setFixedSize(600, 420)
         self.setStyleSheet("""
             QDialog {
@@ -485,7 +485,7 @@ class ImperialBrowserWindow(QMainWindow):
         self.ext_manager = ImperialExtensionsManager(self.profile, window=self)
 
         # Window settings
-        self.setWindowTitle("REV LAUNCHER // REV NETWORK")
+        self.setWindowTitle("REVISION-WEB // PROJECT REVISION")
         self.resize(config.get("window_width", 1360), config.get("window_height", 860))
         self.setMinimumSize(850, 550)
 
@@ -522,7 +522,7 @@ class ImperialBrowserWindow(QMainWindow):
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
 
-        # 1. Rev Network Header
+        # 1. Revision-Web Header
         self.title_bar = QWidget(self)
         self.title_bar.setObjectName("ImperialTitleBar")
         title_layout = QHBoxLayout(self.title_bar)
@@ -532,7 +532,7 @@ class ImperialBrowserWindow(QMainWindow):
         crest_icon.setStyleSheet("color: #ff1e38; font-size: 18px; font-weight: bold;")
         title_layout.addWidget(crest_icon)
 
-        title_label = QLabel("REV LAUNCHER // REV NETWORK")
+        title_label = QLabel("REVISION-WEB")
         title_label.setObjectName("TitleBarLabel")
         title_layout.addWidget(title_label)
 

@@ -1,13 +1,13 @@
 @echo off
-title Rev Network // Rev-Launcher Edition
+title Revision-Web // Tactical Browser
 echo ========================================================
-echo         REV NETWORK - REV-LAUNCHER CORE
-echo        Defensive Tier 1 // Ultra-Low RAM
+echo         REVISION-WEB // PROJECT REVISION
+echo        Powered by Rev-Network Interconnected P2P
 echo ========================================================
-echo Initializing Rev Network Core & Defense Shields...
+echo Initializing Revision-Web Core & Defense Shields...
 cd /d "%~dp0"
 python main.py
 if %ERRORLEVEL% NEQ 0 (
-    echo [ERROR] Rev Network terminated with code %ERRORLEVEL%
+    echo [ERROR] Revision-Web terminated with code %ERRORLEVEL%
     pause
 )

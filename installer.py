@@ -17,10 +17,10 @@ import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 
 # ─── Configuration & Theme ───
-APP_NAME = "Rev Network"
-APP_VERSION = "1.0.0"
-PUBLISHER = "Rev Community"
-EXE_NAME = "Rev-Network.exe"
+APP_NAME = "Revision-Web"
+APP_VERSION = "2.0.0"
+PUBLISHER = "Project Revision"
+EXE_NAME = "Revision-Web.exe"
 
 # Colors (Imperial Dark Theme)
 BG_DARK = "#0b0c12"
@@ -93,18 +93,18 @@ def register_uninstall(install_dir):
 
 def create_uninstall_script(install_dir, desktop_lnk, startmenu_lnk):
     uninst_content = f"""@echo off
-title Rev Network Uninstaller
+title Revision-Web Uninstaller
 cls
 echo ========================================================
-echo         REV NETWORK // SYSTEM REMOVAL
+echo         REVISION-WEB // SYSTEM REMOVAL
 echo ========================================================
 echo.
-echo Removing Rev Network shortcuts...
+echo Removing Revision-Web shortcuts...
 if exist "{desktop_lnk}" del /f /q "{desktop_lnk}"
 if exist "{startmenu_lnk}" del /f /q "{startmenu_lnk}"
 
 echo Removing registry entries...
-reg delete "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\RevNetwork" /f >nul 2>&1
+reg delete "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\RevisionWeb" /f >nul 2>&1
 
 echo Purging installed application files...
 cd /d "%TEMP%"
@@ -122,7 +122,7 @@ class ImperialInstallerApp(tk.Tk):
     def __init__(self):
         super().__init__()
 
-        self.title("Rev Network // Imperial Setup")
+        self.title("Revision-Web // Tactical Setup")
         self.geometry("640x510")
         self.resizable(False, False)
         self.configure(bg=BG_DARK)
@@ -167,7 +167,7 @@ class ImperialInstallerApp(tk.Tk):
 
         lbl_title = tk.Label(
             title_box,
-            text="⚡ REV LAUNCHER // REV NETWORK INSTALLER",
+            text="⚡ REVISION-WEB // INSTALLATION DECK",
             font=("Segoe UI", 14, "bold"),
             fg=ACCENT_RED,
             bg=PANEL_BG
@@ -279,9 +279,9 @@ class ImperialInstallerApp(tk.Tk):
             chk.pack(anchor="w", pady=3)
             return chk
 
-        make_chk(opt_card, "Create Rev Network Desktop Shortcut", self.desktop_shortcut_var)
+        make_chk(opt_card, "Create Revision-Web Desktop Shortcut", self.desktop_shortcut_var)
         make_chk(opt_card, "Create Start Menu Program Entry", self.startmenu_shortcut_var)
-        make_chk(opt_card, "Launch Rev Network immediately after installation", self.launch_browser_var)
+        make_chk(opt_card, "Launch Revision-Web immediately after installation", self.launch_browser_var)
 
         # Bottom Action Bar
         bottom_bar = tk.Frame(self.content_frame, bg=BG_DARK)
@@ -497,7 +497,7 @@ class ImperialInstallerApp(tk.Tk):
 
         lbl_title = tk.Label(
             done_box,
-            text="REV NETWORK READY FOR FLIGHT",
+            text="REVISION-WEB READY FOR FLIGHT",
             font=("Segoe UI", 14, "bold"),
             fg=TEXT_WHITE,
             bg=CARD_BG

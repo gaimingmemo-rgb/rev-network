@@ -1,8 +1,8 @@
 <div align="center">
 
-# ⎊ R E V &nbsp; N E T W O R K
-### TACTICAL DEFENSIVE WEB BROWSER // REV-LAUNCHER COMMAND CORE
-> **Defensive Tier-1 Tactical Web Browser with Decentralized Hardware Node Telemetry, Ultra-Low RAM Footprint, Built-in Ad Vaporizer & Windows Defender Antivirus Engine.**
+# ⎊ R E V I S I O N - W E B
+### TACTICAL DEFENSIVE WEB BROWSER // POWERED BY REV-NETWORK P2P
+> **Defensive Tier-1 Tactical Web Browser with Decentralized P2P Mesh Telemetry, Ultra-Low RAM Footprint, Built-in Ad Vaporizer & Windows Defender Antivirus Engine.**
 
 <br/>
 

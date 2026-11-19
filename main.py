@@ -35,7 +35,7 @@ from config import ASSETS_DIR
 from rev_network_node import rev_server
 
 def main():
-    # Start Rev Network Live Peer Node Server
+    # Start Rev-Network Interconnected P2P Node Server
     rev_server.start()
 
     # Enable High DPI scaling
@@ -44,8 +44,8 @@ def main():
     )
 
     app = QApplication(sys.argv)
-    app.setApplicationName("Rev Network")
-    app.setOrganizationName("RevNetwork")
+    app.setApplicationName("Revision-Web")
+    app.setOrganizationName("RevisionWeb")
 
     # Load icon (.ico preferred for Windows compilation)
     icon_path = ASSETS_DIR / "icon.ico"

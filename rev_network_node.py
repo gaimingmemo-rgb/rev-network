@@ -8,6 +8,7 @@ from pathlib import Path
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 from config import DATA_DIR, ASSETS_DIR
+from vpn_manager import detect_vpn_interface
 
 MESSAGES_FILE = DATA_DIR / "community_messages.json"
 FRIENDS_FILE = DATA_DIR / "community_friends.json"
@@ -20,7 +21,10 @@ class RevNodeState:
         self.lock = threading.Lock()
         self.app_name = app_name
         self.port = default_port
-        self.local_ip = self._get_local_ip()
+        self.vpn_info = detect_vpn_interface()
+        self.vpn_active = self.vpn_info.get("active", False)
+        self.vpn_ip = self.vpn_info.get("ip")
+        self.local_ip = self.vpn_ip if self.vpn_active else self._get_local_ip()
         self.node_id = f"rev-{self.app_name.lower().replace(' ', '-')}-{int(time.time()*1000) % 100000}"
         self.start_time = time.time()
         self.power_score = self._compute_power_score()
@@ -32,6 +36,8 @@ class RevNodeState:
 
         # Register self
         self.register_peer("127.0.0.1", "ZarTo (Host)", "Commander", port=self.port, app=self.app_name, is_self=True)
+        if self.vpn_active:
+            self.register_peer(self.vpn_ip, f"ZarTo [VPN Shielded]", "Commander", port=self.port, app=self.app_name, is_self=True)
 
     def _get_local_ip(self):
         try:
@@ -190,6 +196,9 @@ class RevNodeHTTPHandler(BaseHTTPRequestHandler):
                 "app": node_state.app_name,
                 "node_id": node_state.node_id,
                 "local_ip": node_state.local_ip,
+                "vpn_ip": node_state.vpn_ip,
+                "vpn_active": node_state.vpn_active,
+                "ddos_shield": "ACTIVE" if node_state.vpn_active else "STANDBY",
                 "port": node_state.port,
                 "uptime": uptime_sec,
                 "power_score": node_state.power_score,
@@ -416,15 +425,21 @@ def _heartbeat_to_origin():
     origin_url = os.environ.get("REV_ORIGIN_URL", "https://rev-network.ddns.net:8000")
     endpoint = f"{origin_url.rstrip('/')}/api/register-node"
     
-    # Try DDNS first, fallback to localhost:8000
-    endpoints = [endpoint, "http://127.0.0.1:8000/api/register-node"]
+    # Try localhost first, then DDoS-shielded VPN, then DDNS
+    endpoints = [
+        "http://127.0.0.1:8000/api/register-node",
+        "http://26.68.132.89:8000/api/register-node",
+        endpoint
+    ]
 
     while True:
         payload = json.dumps({
             "node_id": node_state.node_id,
             "app": node_state.app_name,
             "port": node_state.port,
-            "role": "Community Mesh Relay & P2P Node",
+            "vpn_ip": node_state.vpn_ip,
+            "ddos_shield": node_state.vpn_active,
+            "role": "DDoS-Shielded Community Mesh Relay",
             "power_score": node_state.power_score
         }).encode("utf-8")
 

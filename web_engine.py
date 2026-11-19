@@ -172,8 +172,21 @@ class ImperialWebView(QWebEngineView):
                 self.custom_page.command_callback(QUrl("imperial://settings"))
             return
 
+        # Smart routing for Revision Website / DDNS / VPN / Community
+        lower_t = target.lower()
+        if "rev-network.ddns.net" in lower_t:
+            # Seamless loopback routing to Origin Server (bypasses router NAT loopback timeout)
+            self.load(QUrl("http://127.0.0.1:8000"))
+            return
+
+        if lower_t in ["rev://website", "imperial://website", "website", "hub", "portal"]:
+            self.load(QUrl("http://127.0.0.1:8000"))
+            return
+
         if target.startswith("http://") or target.startswith("https://") or target.startswith("file://") or target.startswith("view-source:"):
             self.load(QUrl(target))
+        elif ":" in target and not "/" in target:
+            self.load(QUrl(f"http://{target}"))
         elif "." in target and not " " in target:
             self.load(QUrl(f"https://{target}"))
         else:

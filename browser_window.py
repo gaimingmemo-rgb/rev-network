@@ -829,7 +829,7 @@ class ImperialBrowserWindow(QMainWindow):
             self.tab_widget.add_imperial_tab(target_qurl)
 
     def nav_website(self):
-        self.open_external_or_tab("http://rev-network.ddns.net:8000")
+        self.open_external_or_tab("http://127.0.0.1:8000")
 
     def nav_releases(self):
         self.open_external_or_tab("https://github.com/gaimingmemo-rgb/rev-network/releases")

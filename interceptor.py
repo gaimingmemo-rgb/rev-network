@@ -16,9 +16,9 @@ class ImperialRequestInterceptor(QWebEngineUrlRequestInterceptor):
         host = qurl.host().lower()
         port = qurl.port()
 
-        # Seamless local loopback mapping for rev-network.ddns.net:8000
+        # Seamless local loopback mapping for rev-network.ddns.net
         # Prevents router NAT loopback / hairpinning timeouts on host PC
-        if host == "rev-network.ddns.net" and (port == 8000 or port == -1):
+        if "rev-network.ddns.net" in host:
             target = QUrl(qurl)
             target.setHost("127.0.0.1")
             target.setPort(8000)

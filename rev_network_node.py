@@ -367,10 +367,17 @@ def _launch_ecosystem_app(target_app: str) -> bool:
         print(f"[ECOSYSTEM LAUNCH ERROR] Failed to start {target_app}: {e}")
     return False
 
+KNOWN_MESH_PORTS = [8000, 8765, 8766, 8767, 8768]
+
 # ─── P2P UDP LAN Broadcast & Discovery ─────────────────────────────────────
 def _run_udp_broadcast(port: int, app_name: str):
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+
+    broadcast_targets = [("<broadcast>", UDP_DISCOVERY_PORT), ("127.0.0.1", UDP_DISCOVERY_PORT)]
+    if node_state.vpn_active and node_state.vpn_ip:
+        broadcast_targets.append(("26.255.255.255", UDP_DISCOVERY_PORT))
+
     while True:
         try:
             msg = json.dumps({
@@ -381,7 +388,11 @@ def _run_udp_broadcast(port: int, app_name: str):
                 "power_score": node_state.power_score,
                 "time": time.time()
             }).encode("utf-8")
-            s.sendto(msg, ("<broadcast>", UDP_DISCOVERY_PORT))
+            for target in broadcast_targets:
+                try:
+                    s.sendto(msg, target)
+                except Exception:
+                    pass
         except Exception:
             pass
         time.sleep(8)
@@ -403,7 +414,8 @@ def _run_udp_listener(my_port: int):
                     peer_port = payload.get("port", 8765)
                     peer_app = payload.get("app", "Revision-App")
                     peer_power = payload.get("power_score", 15.0)
-                    if not (peer_ip in ["127.0.0.1", node_state.local_ip] and peer_port == my_port):
+                    peer_nid = payload.get("node_id", "")
+                    if peer_nid != node_state.node_id and not (peer_ip in ["127.0.0.1", node_state.local_ip] and peer_port == my_port):
                         node_state.register_peer(
                             ip=peer_ip,
                             username=f"{peer_app} Pilot",
@@ -418,18 +430,56 @@ def _run_udp_listener(my_port: int):
     except Exception as e:
         pass
 
+def _probe_local_ring(my_port: int):
+    """
+    Direct high-speed local & VPN inter-app discovery ring.
+    Periodically checks standard ports (8000, 8765, 8766, 8767, 8768)
+    to instantly discover locally-running Revision apps.
+    """
+    import urllib.request
+    time.sleep(2)
+    hosts_to_probe = ["127.0.0.1"]
+    if node_state.vpn_active and node_state.vpn_ip:
+        hosts_to_probe.append(node_state.vpn_ip)
+
+    while True:
+        for host in hosts_to_probe:
+            for p in KNOWN_MESH_PORTS:
+                if host in ["127.0.0.1", node_state.local_ip] and p == my_port:
+                    continue
+                try:
+                    url = f"http://{host}:{p}/api/status"
+                    req = urllib.request.Request(url, headers={"User-Agent": "RevMeshProber/1.0"})
+                    with urllib.request.urlopen(req, timeout=0.8) as resp:
+                        if resp.status == 200:
+                            data = json.loads(resp.read().decode("utf-8", errors="ignore"))
+                            p_app = data.get("app") or ("Origin Web Gateway" if p == 8000 else "Revision Node")
+                            p_power = float(data.get("power_score", 20.0))
+                            p_id = data.get("node_id", "")
+                            if p_id != node_state.node_id:
+                                node_state.register_peer(
+                                    ip=host,
+                                    username=f"{p_app} [Local Mesh]",
+                                    rank="Ally",
+                                    port=p,
+                                    app=p_app,
+                                    is_self=False,
+                                    power=p_power
+                                )
+                except Exception:
+                    pass
+        time.sleep(6)
+
 # ─── Heartbeat to Origin Server (DDNS / Localhost) ─────────────────────────
 def _heartbeat_to_origin():
     import ssl
+    import urllib.request
     ssl_unverified = ssl._create_unverified_context()
     origin_url = os.environ.get("REV_ORIGIN_URL", "https://rev-network.ddns.net:8000")
-    endpoint = f"{origin_url.rstrip('/')}/api/register-node"
-    
-    # Try localhost first, then DDoS-shielded VPN, then DDNS
     endpoints = [
-        "http://127.0.0.1:8000/api/register-node",
-        "http://26.68.132.89:8000/api/register-node",
-        endpoint
+        "http://127.0.0.1:8000",
+        "http://26.68.132.89:8000",
+        origin_url.rstrip('/')
     ]
 
     while True:
@@ -443,16 +493,34 @@ def _heartbeat_to_origin():
             "power_score": node_state.power_score
         }).encode("utf-8")
 
-        for ep in endpoints:
+        for base_ep in endpoints:
             try:
-                from urllib.request import Request, urlopen
-                req = Request(ep, data=payload, headers={"Content-Type": "application/json"})
-                with urlopen(req, timeout=4, context=ssl_unverified if ep.startswith("https") else None) as resp:
+                reg_url = f"{base_ep}/api/register-node"
+                req = urllib.request.Request(reg_url, data=payload, headers={"Content-Type": "application/json"})
+                with urllib.request.urlopen(req, timeout=4, context=ssl_unverified if reg_url.startswith("https") else None) as resp:
                     if resp.status == 200:
+                        res_data = json.loads(resp.read().decode("utf-8", errors="ignore"))
+                        peers = res_data.get("peers") or res_data.get("nodes") or []
+                        for peer in peers:
+                            p_nid = peer.get("node_id")
+                            if p_nid and p_nid != node_state.node_id:
+                                p_ip = peer.get("ip") or peer.get("client_ip") or "127.0.0.1"
+                                p_port = int(peer.get("port", 8765))
+                                p_app = peer.get("app", "Revision-App")
+                                p_power = float(peer.get("power_score", 15.0))
+                                node_state.register_peer(
+                                    ip=p_ip,
+                                    username=f"{p_app} Pilot",
+                                    rank="Ally",
+                                    port=p_port,
+                                    app=p_app,
+                                    is_self=False,
+                                    power=p_power
+                                )
                         break
             except Exception:
                 pass
-        time.sleep(20)
+        time.sleep(12)
 
 class RevNetworkServer:
     def __init__(self, port=8765, app_name="Revision-Web"):
@@ -472,6 +540,7 @@ class RevNetworkServer:
             threading.Thread(target=_heartbeat_to_origin, daemon=True).start()
             threading.Thread(target=_run_udp_broadcast, args=(self.port, self.app_name), daemon=True).start()
             threading.Thread(target=_run_udp_listener, args=(self.port,), daemon=True).start()
+            threading.Thread(target=_probe_local_ring, args=(self.port,), daemon=True).start()
         except Exception as e:
             print(f"[REV-NETWORK P2P ERROR] Failed starting on port {self.port}: {e}")
 
